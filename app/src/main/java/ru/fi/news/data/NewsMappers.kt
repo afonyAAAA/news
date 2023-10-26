@@ -3,6 +3,19 @@ package ru.fi.news.data
 import ru.fi.news.domain.News
 import ru.fi.news.data.local.NewsEntity
 import ru.fi.news.data.remote.Article
+import java.text.SimpleDateFormat
+
+fun String.convertToMyDateFormat() : String{
+    val inputDateString = this
+    val inputFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    val outputFormat = "dd/MM/yyyy HH:mm:ss"
+
+    val inputFormatter = SimpleDateFormat(inputFormat)
+    val outputFormatter = SimpleDateFormat(outputFormat)
+
+    val date = inputFormatter.parse(inputDateString)
+    return outputFormatter.format(date)
+}
 
 fun Article.toNewsEntity() : NewsEntity {
     return NewsEntity(
@@ -26,8 +39,7 @@ fun NewsEntity.toNews() : News {
         source = source,
         url = url,
         urlToImage = urlToImage,
-        publishedAt = publishedAt
+        publishedAt = publishedAt.convertToMyDateFormat()
     )
 }
-
 

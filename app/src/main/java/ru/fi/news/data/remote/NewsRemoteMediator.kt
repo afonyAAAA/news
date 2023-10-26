@@ -27,7 +27,7 @@ class NewsRemoteMediator(
                 LoadType.REFRESH -> 5
                 LoadType.PREPEND -> {
                     val prevKey = state.closestItemToPosition(0)
-                    val page = prevKey?.id?.let { it / state.config.pageSize } ?: 5
+                    val page = prevKey?.id?.let { ceil(it.toDouble() / state.config.pageSize).toInt() } ?: 5
                     val prefetchedNews = newsApi.getNews(page = page, pageSize = 5)
                     val prefetchedEntities = prefetchedNews.articles.map { it.toNewsEntity() }
                     newsDb.dao.upsertAll(prefetchedEntities)
@@ -38,7 +38,7 @@ class NewsRemoteMediator(
                     if(lastItem == null){
                         5
                     }else{
-                        ceil(lastItem.id.toDouble() / state.config.pageSize).toInt() + 1)
+                        ceil(lastItem.id!!.toDouble() / state.config.pageSize).toInt() + 1
                     }
                 }
             }
