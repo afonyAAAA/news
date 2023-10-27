@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -39,12 +40,15 @@ class NewsViewModel(
                     isShowWebView = false
                 )
             }
-
             is UIevent.ShowWebView -> {
                 stateUi.copy(
                     url = event.url,
                     isShowWebView = true
                 )
+            }
+            is UIevent.RefreshNews -> {
+                event.news.refresh()
+                stateUi
             }
         }
     }

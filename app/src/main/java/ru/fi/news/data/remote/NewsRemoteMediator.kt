@@ -5,6 +5,7 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
+import androidx.room.withTransaction
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
 import ru.fi.news.data.local.NewsDatabase
@@ -26,12 +27,16 @@ class NewsRemoteMediator(
             val loadKey = when(loadType){
                 LoadType.REFRESH -> 5
                 LoadType.PREPEND -> {
-                    val prevKey = state.closestItemToPosition(0)
-                    val page = prevKey?.id?.let { ceil(it.toDouble() / state.config.pageSize).toInt() } ?: 5
-                    val prefetchedNews = newsApi.getNews(page = page, pageSize = 5)
-                    val prefetchedEntities = prefetchedNews.articles.map { it.toNewsEntity() }
-                    newsDb.dao.upsertAll(prefetchedEntities)
-                    return MediatorResult.Success(endOfPaginationReached = prefetchedEntities.isEmpty())
+                    val lastItem = state.lastItemOrNull()
+                    return if(lastItem == null){
+                        MediatorResult.Success(endOfPaginationReached = false)
+                    }else{
+                        val page = lastItem?.id.let {(it!!.toDouble() / state.config.pageSize).toInt() + 1}
+                        val prefetchedNews = newsApi.getNews(page = page, pageSize = 5)
+                        val prefetchedEntities = prefetchedNews.articles.map { it.toNewsEntity() }
+                        newsDb.dao.upsertAll(prefetchedEntities)
+                        MediatorResult.Success(endOfPaginationReached = prefetchedEntities.isEmpty())
+                    }
                 }
                 LoadType.APPEND -> {
                     val lastItem = state.lastItemOrNull()
@@ -48,8 +53,13 @@ class NewsRemoteMediator(
                 pageSize = state.config.pageSize
             )
 
-            val newsEntities = news.articles.map { it.toNewsEntity() }
-            newsDb.dao.upsertAll(newsEntities)
+            newsDb.withTransaction {
+                if(loadType == LoadType.REFRESH){
+                    newsDb.dao.deleteAllNews()
+                }
+                val newsEntities = news.articles.map { it.toNewsEntity() }
+                newsDb.dao.upsertAll(newsEntities)
+            }
 
             MediatorResult.Success(
                 endOfPaginationReached = news.articles.isEmpty()

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
@@ -53,7 +54,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
@@ -66,41 +66,50 @@ import ru.fi.news.viewModel.NewsViewModel
 fun NewsScreen(){
     val newsViewModel : NewsViewModel = koinViewModel()
     val news = newsViewModel.newsPagingFlow.collectAsLazyPagingItems()
-    val context = LocalContext.current
-    val stateUi = newsViewModel.stateUi
+//    val context = LocalContext.current
+//    val stateUi = newsViewModel.stateUi
 
-    LaunchedEffect(news.loadState){
-        if(news.loadState.refresh is LoadState.Error){
-            Toast.makeText(
-                context,
-                "Error: " + (news.loadState.refresh as LoadState.Error).error.message,
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
+//    LaunchedEffect(news.loadState){
+//        if(!newsViewModel.isInternetAvailable(context)){
+//
+//        }
+//        if(news.loadState.refresh is LoadState.Error){
+//            Toast.makeText(
+//                context,
+//                "Error: " + (news.loadState.refresh as LoadState.Error).error.message,
+//                Toast.LENGTH_LONG
+//            ).show()
+//        }
+//    }
 
-    AnimatedVisibility(visible = !stateUi.isShowWebView) {
+    //AnimatedVisibility(visible = !stateUi.isShowWebView) {
         Box(modifier = Modifier.fillMaxSize()){
             if(news.loadState.refresh is LoadState.Loading){
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
-            }
-            NewsList(news = news){ selectedNews ->
-                newsViewModel.onEvent(UIevent.ShowWebView(selectedNews.url))
+            }else{
+                NewsList(news = news,
+                    onClick =  { selectedNews ->
+                        newsViewModel.onEvent(UIevent.ShowWebView(selectedNews.url))
+                    },
+                    onRefresh = {
+                        newsViewModel.onEvent(UIevent.RefreshNews(news))
+                    }
+                )
             }
         }
-    }
-    AnimatedVisibility(visible = stateUi.isShowWebView) {
-        WebViewNews(url = stateUi.url) {
-            newsViewModel.onEvent(UIevent.HideWebView)
-        }
-    }
+    //}
+    //AnimatedVisibility(visible = stateUi.isShowWebView) {
+//        WebViewNews(url = stateUi.url) {
+//            newsViewModel.onEvent(UIevent.HideWebView)
+//        }
+   // }
 }
 
 
 @Composable
-fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit){
+fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit, onRefresh : () -> Unit){
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -121,7 +130,7 @@ fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit){
                         Text(text = "Интернет пропал!")
                         Spacer(modifier = Modifier.height(10.dp))
                         Button(onClick = {
-                            news.retry()
+                            onRefresh()
                         }) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = "Перезагрузить")
@@ -133,12 +142,12 @@ fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit){
                 }
             }
         }
-        items(news){ news ->
-            if(news != null){
+        items(news.itemCount){ index ->
+            if(news[index] != null){
                 NewsItem(
-                    news = news,
+                    news = news[index]!!,
                     onClick = {
-                        onClick(news)
+                        onClick(news[index]!!)
                     }
                 )
             }
@@ -173,7 +182,7 @@ fun NewsItem(
             isErrorLoading = true
         }
     )
-    
+
     Card(
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
         modifier = Modifier
@@ -199,7 +208,9 @@ fun NewsItem(
                         Icon(
                             imageVector = Icons.Outlined.Warning,
                             contentDescription = "",
-                            modifier = Modifier.size(50.dp).align(Alignment.CenterHorizontally)
+                            modifier = Modifier
+                                .size(50.dp)
+                                .align(Alignment.CenterHorizontally)
                         )
                     }else{
                         Image(
@@ -276,6 +287,19 @@ fun WebViewNews(
             webView.restoreState(webViewState)
         }
     )
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomStart
+    ){
+        Button(onClick = {
+            onBack()
+        },
+            modifier = Modifier.padding(8.dp)
+        ) {
+            Icon(imageVector = Icons.Outlined.ArrowBack, contentDescription = "")
+        }
+    }
 
     DisposableEffect(Unit){
         onDispose {

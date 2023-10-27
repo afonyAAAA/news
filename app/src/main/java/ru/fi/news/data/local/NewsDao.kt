@@ -12,4 +12,7 @@ interface NewsDao {
 
     @Query("SELECT * FROM newsentity")
     fun pagingSource() : PagingSource<Int, NewsEntity>
+
+    @Query("DELETE FROM newsentity")
+    fun deleteAllNews()
 }
