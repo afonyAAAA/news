@@ -25,44 +25,51 @@ class NewsRemoteMediator(
     ): MediatorResult {
         return try {
             val loadKey = when(loadType){
-                LoadType.REFRESH -> 5
+                LoadType.REFRESH -> {
+                    5
+                }
                 LoadType.PREPEND -> {
+                    return MediatorResult.Success(false)
+                }
+                LoadType.APPEND -> {
+                    val isCanLoadNews = if(state.anchorPosition != null){
+                        state.anchorPosition!! >= state.pages.size - state.config.prefetchDistance
+                    } else {
+                        false
+                    }
                     val lastItem = state.lastItemOrNull()
                     return if(lastItem == null){
                         MediatorResult.Success(endOfPaginationReached = false)
                     }else{
-                        val page = lastItem?.id.let {(it!!.toDouble() / state.config.pageSize).toInt() + 1}
-                        val prefetchedNews = newsApi.getNews(page = page, pageSize = 5)
-                        val prefetchedEntities = prefetchedNews.articles.map { it.toNewsEntity() }
-                        newsDb.dao.upsertAll(prefetchedEntities)
-                        MediatorResult.Success(endOfPaginationReached = prefetchedEntities.isEmpty())
-                    }
-                }
-                LoadType.APPEND -> {
-                    val lastItem = state.lastItemOrNull()
-                    if(lastItem == null){
-                        5
-                    }else{
-                        ceil(lastItem.id!!.toDouble() / state.config.pageSize).toInt() + 1
+                        if(isCanLoadNews){
+                            val page = lastItem?.id.let {(it!!.toDouble() / state.config.pageSize).toInt() + 1}
+                            val prefetchedNews = newsApi.getNews(page = page, pageSize = state.config.pageSize)
+                            val prefetchedEntities = prefetchedNews.articles.map { it.toNewsEntity() }
+                            newsDb.dao.upsertAll(prefetchedEntities)
+                            MediatorResult.Success(endOfPaginationReached = prefetchedEntities.isEmpty())
+                        }
+                        MediatorResult.Success(false)
                     }
                 }
             }
 
-            val news = newsApi.getNews(
-                page = loadKey,
-                pageSize = state.config.pageSize
-            )
-
-            newsDb.withTransaction {
-                if(loadType == LoadType.REFRESH){
-                    newsDb.dao.deleteAllNews()
-                }
+            if(state.pages.isEmpty()){
+                val news = newsApi.getNews(
+                    page = loadKey,
+                    pageSize = state.config.pageSize
+                )
                 val newsEntities = news.articles.map { it.toNewsEntity() }
                 newsDb.dao.upsertAll(newsEntities)
             }
 
+            if(state.pages.isNotEmpty()){
+                if(loadType == LoadType.REFRESH){
+                    newsDb.dao.deleteAllNews()
+                }
+            }
+
             MediatorResult.Success(
-                endOfPaginationReached = news.articles.isEmpty()
+                endOfPaginationReached = false
             )
         }catch (e : IOException){
             MediatorResult.Error(e)

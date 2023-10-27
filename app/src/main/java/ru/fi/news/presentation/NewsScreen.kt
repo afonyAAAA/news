@@ -66,21 +66,21 @@ import ru.fi.news.viewModel.NewsViewModel
 fun NewsScreen(){
     val newsViewModel : NewsViewModel = koinViewModel()
     val news = newsViewModel.newsPagingFlow.collectAsLazyPagingItems()
-//    val context = LocalContext.current
-//    val stateUi = newsViewModel.stateUi
+    val context = LocalContext.current
+    val stateUi = newsViewModel.stateUi
 
-//    LaunchedEffect(news.loadState){
-//        if(!newsViewModel.isInternetAvailable(context)){
-//
-//        }
-//        if(news.loadState.refresh is LoadState.Error){
-//            Toast.makeText(
-//                context,
-//                "Error: " + (news.loadState.refresh as LoadState.Error).error.message,
-//                Toast.LENGTH_LONG
-//            ).show()
-//        }
-//    }
+    LaunchedEffect(news.loadState){
+        if(!newsViewModel.isInternetAvailable(context)){
+
+        }
+        if(news.loadState.refresh is LoadState.Error){
+            Toast.makeText(
+                context,
+                "Error: " + (news.loadState.refresh as LoadState.Error).error.message,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     //AnimatedVisibility(visible = !stateUi.isShowWebView) {
         Box(modifier = Modifier.fillMaxSize()){

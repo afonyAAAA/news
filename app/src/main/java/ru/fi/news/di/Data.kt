@@ -43,9 +43,8 @@ val dataModule = module {
 
         Pager(
             config = PagingConfig(
-                pageSize = 10,
-                prefetchDistance = 5,
-                enablePlaceholders = false
+                pageSize = 15,
+                prefetchDistance = 5
             ),
             remoteMediator = NewsRemoteMediator(
                 newsDb = newsDb,
