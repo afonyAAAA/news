@@ -47,8 +47,7 @@ val dataModule = module {
             config = PagingConfig(
                 pageSize = 20,
                 prefetchDistance = 5,
-                initialLoadSize = 19,
-
+                initialLoadSize = 19
             ),
             remoteMediator = NewsRemoteMediator(
                 newsDb = newsDb,

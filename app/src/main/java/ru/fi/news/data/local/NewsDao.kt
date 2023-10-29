@@ -10,7 +10,7 @@ interface NewsDao {
     @Upsert
     suspend fun upsertAll(news : List<NewsEntity>)
 
-    @Query("SELECT * FROM newsentity")
+    @Query("SELECT DISTINCT * FROM newsentity")
     fun pagingSource() : PagingSource<Int, NewsEntity>
 
     @Query("DELETE FROM newsentity")

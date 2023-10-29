@@ -35,8 +35,7 @@ class NewsRemoteMediator(
                     if(lastItem == null) {
                         5
                     } else {
-                        val page = (lastItem.id!! / state.config.pageSize) + 1
-                        page
+                        (lastItem.id!! / state.config.pageSize) + 6
                     }
                 }
             }
