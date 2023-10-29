@@ -4,34 +4,25 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import androidx.compose.runtime.collectAsState
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
 import androidx.paging.cachedIn
-import androidx.paging.map
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
-import ru.fi.news.data.toNews
-import ru.fi.news.data.local.NewsEntity
-import ru.fi.news.presentation.UIevent.UIevent
+import ru.fi.news.data.remote.NewsRepository
+import ru.fi.news.presentation.event.UIevent
 import ru.fi.news.presentation.stateUI.StateUi
+import ru.fi.news.utils.isInternetAvailable
 
-class NewsViewModel(
-    pager : Pager<Int, NewsEntity>
-) : ViewModel() {
+class NewsViewModel(newsRepository : NewsRepository) : ViewModel() {
 
-    val newsPagingFlow = pager
-        .flow
-        .map { pagingData ->
-            pagingData.map { it.toNews() }
-        }
-        .cachedIn(viewModelScope)
-
-    var stateUi by mutableStateOf(StateUi())
+    var stateUi by mutableStateOf(StateUi(
+        news = newsRepository
+            .getNews()
+            .cachedIn(viewModelScope)
+    ))
 
     fun onEvent(event : UIevent){
         stateUi = when(event){
@@ -50,20 +41,26 @@ class NewsViewModel(
                 event.news.refresh()
                 stateUi
             }
+            UIevent.CanRefresh ->{
+                stateUi.copy(
+                    isCanRefresh = true
+                )
+            }
+            UIevent.NotCanRefresh -> {
+                stateUi.copy(
+                    isCanRefresh = false
+                )
+            }
+            is UIevent.CheckInternet -> {
+                if(!event.context.isInternetAvailable()){
+                    Toast.makeText(event.context, "Интернет соедениение потеряно", Toast.LENGTH_SHORT).show()
+                    stateUi.copy(
+                        isCanRefresh = true
+                    )
+                }else{
+                    stateUi
+                }
+            }
         }
     }
-
-    fun isInternetAvailable(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
-            return networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        } else {
-            val networkInfo = connectivityManager.activeNetworkInfo
-            return networkInfo?.isConnected == true
-        }
-    }
-
 }

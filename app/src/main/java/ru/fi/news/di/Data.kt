@@ -15,6 +15,8 @@ import ru.fi.news.data.remote.NewsApi
 import ru.fi.news.data.remote.NewsRemoteMediator
 import ru.fi.news.data.local.NewsDatabase
 import ru.fi.news.data.local.NewsEntity
+import ru.fi.news.data.remote.NewsImpl
+import ru.fi.news.data.remote.NewsRepository
 import ru.fi.news.viewModel.NewsViewModel
 
 @OptIn(ExperimentalPagingApi::class)
@@ -43,8 +45,10 @@ val dataModule = module {
 
         Pager(
             config = PagingConfig(
-                pageSize = 15,
-                prefetchDistance = 5
+                pageSize = 20,
+                prefetchDistance = 5,
+                initialLoadSize = 19,
+
             ),
             remoteMediator = NewsRemoteMediator(
                 newsDb = newsDb,
@@ -54,6 +58,10 @@ val dataModule = module {
                 newsDb.dao.pagingSource()
             }
         )
+    }
+
+    single<NewsRepository>{
+        NewsImpl(pager = get())
     }
 
     viewModelOf(::NewsViewModel)

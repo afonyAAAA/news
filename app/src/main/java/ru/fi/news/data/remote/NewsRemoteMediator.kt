@@ -19,58 +19,45 @@ class NewsRemoteMediator(
     private val newsDb : NewsDatabase,
     private val newsApi: NewsApi
 ) : RemoteMediator<Int, NewsEntity>() {
+
     override suspend fun load(
         loadType: LoadType,
         state: PagingState<Int, NewsEntity>,
     ): MediatorResult {
         return try {
-            val loadKey = when(loadType){
-                LoadType.REFRESH -> {
-                    5
-                }
-                LoadType.PREPEND -> {
-                    return MediatorResult.Success(false)
-                }
-                LoadType.APPEND -> {
-                    val isCanLoadNews = if(state.anchorPosition != null){
-                        state.anchorPosition!! >= state.pages.size - state.config.prefetchDistance
-                    } else {
-                        false
-                    }
-                    val lastItem = state.lastItemOrNull()
-                    return if(lastItem == null){
-                        MediatorResult.Success(endOfPaginationReached = false)
-                    }else{
-                        if(isCanLoadNews){
-                            val page = lastItem?.id.let {(it!!.toDouble() / state.config.pageSize).toInt() + 1}
-                            val prefetchedNews = newsApi.getNews(page = page, pageSize = state.config.pageSize)
-                            val prefetchedEntities = prefetchedNews.articles.map { it.toNewsEntity() }
-                            newsDb.dao.upsertAll(prefetchedEntities)
-                            MediatorResult.Success(endOfPaginationReached = prefetchedEntities.isEmpty())
-                        }
-                        MediatorResult.Success(false)
-                    }
-                }
-            }
-
-            if(state.pages.isEmpty()){
-                val news = newsApi.getNews(
-                    page = loadKey,
-                    pageSize = state.config.pageSize
+            val loadKey = when(loadType) {
+                LoadType.REFRESH -> 5
+                LoadType.PREPEND -> return MediatorResult.Success(
+                    endOfPaginationReached = true
                 )
-                val newsEntities = news.articles.map { it.toNewsEntity() }
-                newsDb.dao.upsertAll(newsEntities)
+                LoadType.APPEND -> {
+                    val lastItem = state.lastItemOrNull()
+                    if(lastItem == null) {
+                        5
+                    } else {
+                        val page = (lastItem.id!! / state.config.pageSize) + 1
+                        page
+                    }
+                }
             }
 
-            if(state.pages.isNotEmpty()){
-                if(loadType == LoadType.REFRESH){
+            val news = newsApi.getNews(
+                page = loadKey,
+                pageSize = state.config.pageSize
+            )
+
+            newsDb.withTransaction {
+                if(loadType == LoadType.REFRESH) {
                     newsDb.dao.deleteAllNews()
                 }
+                val beerEntities = news.articles.map{ it.toNewsEntity() }
+                newsDb.dao.upsertAll(beerEntities)
             }
 
             MediatorResult.Success(
-                endOfPaginationReached = false
+                endOfPaginationReached = news.articles.size < state.config.pageSize
             )
+
         }catch (e : IOException){
             MediatorResult.Error(e)
         }catch (e : HttpException){

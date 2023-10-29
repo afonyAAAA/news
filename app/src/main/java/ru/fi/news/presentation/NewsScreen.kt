@@ -1,11 +1,16 @@
 package ru.fi.news.presentation
 
 import android.os.Bundle
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
@@ -59,65 +65,57 @@ import coil.request.ImageRequest
 import coil.size.Size
 import org.koin.androidx.compose.koinViewModel
 import ru.fi.news.domain.News
-import ru.fi.news.presentation.UIevent.UIevent
+import ru.fi.news.presentation.event.UIevent
 import ru.fi.news.viewModel.NewsViewModel
 
 @Composable
-fun NewsScreen(){
-    val newsViewModel : NewsViewModel = koinViewModel()
-    val news = newsViewModel.newsPagingFlow.collectAsLazyPagingItems()
-    val context = LocalContext.current
+fun NewsScreen(newsViewModel : NewsViewModel = koinViewModel()){
+
     val stateUi = newsViewModel.stateUi
+    val context = LocalContext.current
+    val news = stateUi.news.collectAsLazyPagingItems()
 
     LaunchedEffect(news.loadState){
-        if(!newsViewModel.isInternetAvailable(context)){
+        val isError = news.loadState.refresh is LoadState.Error
+                || news.loadState.append is LoadState.Error
 
-        }
-        if(news.loadState.refresh is LoadState.Error){
-            Toast.makeText(
-                context,
-                "Error: " + (news.loadState.refresh as LoadState.Error).error.message,
-                Toast.LENGTH_LONG
-            ).show()
+        if(isError){
+            newsViewModel.onEvent(UIevent.CanRefresh)
+        }else{
+            if(stateUi.isCanRefresh) newsViewModel.onEvent(UIevent.NotCanRefresh)
         }
     }
 
-    //AnimatedVisibility(visible = !stateUi.isShowWebView) {
-        Box(modifier = Modifier.fillMaxSize()){
-            if(news.loadState.refresh is LoadState.Loading){
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }else{
-                NewsList(news = news,
-                    onClick =  { selectedNews ->
-                        newsViewModel.onEvent(UIevent.ShowWebView(selectedNews.url))
-                    },
-                    onRefresh = {
-                        newsViewModel.onEvent(UIevent.RefreshNews(news))
-                    }
-                )
-            }
+    Box(modifier = Modifier.fillMaxSize()){
+        if(news.loadState.refresh is LoadState.Loading){
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }else{
+            NewsList(
+                news = news,
+                onClick =  { selectedNews ->
+                    newsViewModel.onEvent(UIevent.ShowWebView(selectedNews.url))
+                }
+            )
         }
-    //}
-    //AnimatedVisibility(visible = stateUi.isShowWebView) {
-//        WebViewNews(url = stateUi.url) {
-//            newsViewModel.onEvent(UIevent.HideWebView)
-//        }
-   // }
-}
+    }
 
+    AnimatedVisibility(
+        visible = stateUi.isShowWebView,
+        enter = slideInHorizontally(animationSpec = tween(500, 200)),
+        exit = slideOutHorizontally(targetOffsetX = {-it * 2 / 2})
+    ) {
+        WebViewNews(url = stateUi.url) {
+            newsViewModel.onEvent(UIevent.HideWebView)
+            newsViewModel.onEvent(UIevent.CheckInternet(context))
+        }
+    }
 
-@Composable
-fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit, onRefresh : () -> Unit){
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        item{
-            Spacer(modifier = Modifier.height(10.dp))
-            if(news.loadState.refresh is LoadState.Error){
+    if(stateUi.isCanRefresh){
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter){
+            Column {
+                Spacer(modifier = Modifier.height(10.dp))
                 Card(
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -127,10 +125,8 @@ fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit, onRefresh : (
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(text = "Интернет пропал!")
-                        Spacer(modifier = Modifier.height(10.dp))
                         Button(onClick = {
-                            onRefresh()
+                            newsViewModel.onEvent(UIevent.RefreshNews(news))
                         }) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = "Перезагрузить")
@@ -142,6 +138,24 @@ fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit, onRefresh : (
                 }
             }
         }
+    }
+}
+
+
+@Composable
+fun NewsList(
+    news: LazyPagingItems<News>,
+    onClick: (News) -> Unit
+){
+
+    val scrollState = rememberLazyListState()
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        state = scrollState,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
         items(news.itemCount){ index ->
             if(news[index] != null){
                 NewsItem(
@@ -150,6 +164,15 @@ fun NewsList(news: LazyPagingItems<News>, onClick: (News) -> Unit, onRefresh : (
                         onClick(news[index]!!)
                     }
                 )
+            }
+        }
+        item{
+            if(news.loadState.refresh is LoadState.Loading || news.loadState.append is LoadState.Loading){
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
             }
         }
     }
@@ -241,6 +264,7 @@ fun NewsItem(
         }
     }
 }
+
 @Composable
 fun WebViewNews(
     url : String,
@@ -249,6 +273,8 @@ fun WebViewNews(
     val context = LocalContext.current
 
     var isLoading by rememberSaveable { mutableStateOf(true) }
+
+    var errorIsGot by rememberSaveable { mutableStateOf(false) }
 
     var webView by remember{
         mutableStateOf(WebView(context))
@@ -272,6 +298,21 @@ fun WebViewNews(
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     isLoading = false
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    if(!errorIsGot){
+                        Toast
+                            .makeText(context, "Не удалось загрузить страницу", Toast.LENGTH_SHORT)
+                            .show()
+                        onBack()
+                        errorIsGot = true
+                    }
                 }
             }
 

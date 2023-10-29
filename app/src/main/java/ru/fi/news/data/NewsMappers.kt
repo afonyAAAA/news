@@ -20,7 +20,7 @@ fun String.convertToMyDateFormat() : String{
 fun Article.toNewsEntity() : NewsEntity {
     return NewsEntity(
         author = author,
-        title = title,
+        title = title ?: "",
         description = description,
         content = content,
         source = source.name,
