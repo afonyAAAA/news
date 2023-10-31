@@ -1,8 +1,8 @@
 package ru.fi.news.data
 
-import ru.fi.news.domain.News
 import ru.fi.news.data.local.NewsEntity
 import ru.fi.news.data.remote.Article
+import ru.fi.news.domain.News
 import java.text.SimpleDateFormat
 
 fun String.convertToMyDateFormat() : String{
@@ -33,13 +33,13 @@ fun Article.toNewsEntity() : NewsEntity {
 fun NewsEntity.toNews() : News {
     return News(
         author = author,
-        title = title,
-        description = description,
+        title = title ?: "Без названия",
+        description = description ?: "Без описания",
         content = content,
         source = source,
         url = url,
         urlToImage = urlToImage,
-        publishedAt = publishedAt.convertToMyDateFormat()
+        publishedAt = publishedAt?.convertToMyDateFormat() ?: "Время публикации - неизвестно"
     )
 }
 
