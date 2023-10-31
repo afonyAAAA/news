@@ -192,114 +192,6 @@ fun NewsList(
         }
     }
 }
-//////////Old news item
-//
-//@Composable
-//fun NewsItem(
-//    news : News,
-//    onClick : (News) -> Unit
-//){
-//
-//    var isErrorLoading : Boolean by rememberSaveable {
-//        mutableStateOf(false)
-//    }
-//
-//    var isImageLoading : Boolean by rememberSaveable {
-//        mutableStateOf(true)
-//    }
-//
-//    var expandedImage by rememberSaveable { mutableStateOf(false) }
-//
-//    val painter = rememberAsyncImagePainter(
-//        model = ImageRequest.Builder(LocalContext.current)
-//            .data(news.urlToImage)
-//            .size(Size.ORIGINAL)
-//            .crossfade(true)
-//            .build(),
-//        onSuccess = {
-//            isImageLoading = false
-//        },
-//        onError = {
-//            isErrorLoading = true
-//        }
-//    )
-//
-//    Card(
-//        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-//        modifier = Modifier
-//            .padding(top = 20.dp)
-//            .heightIn(max = if (expandedImage) 1000.dp else 300.dp)
-//            .clickable {
-//                onClick(news)
-//            }
-//            .fillMaxWidth(),
-//        elevation = CardDefaults.cardElevation(8.dp),
-//    ) {
-//        Column{
-//            Box(
-//                modifier = Modifier.background(color = Color.Black.copy(0.2f)),
-//                contentAlignment = Alignment.BottomStart
-//            ){
-//                Column(Modifier.fillMaxSize()) {
-//                    if(isImageLoading){
-//                        CircularProgressIndicator(
-//                            color = Color.Black.copy(0.5f),
-//                            modifier = Modifier.align(Alignment.CenterHorizontally)
-//                        )
-//                    }else if(isErrorLoading){
-//                        Icon(
-//                            imageVector = Icons.Outlined.Warning,
-//                            contentDescription = "",
-//                            modifier = Modifier
-//                                .size(50.dp)
-//                                .align(Alignment.CenterHorizontally)
-//                        )
-//                    }else{
-//                        Image(
-//                            painter = painter,
-//                            contentDescription = "",
-//                            contentScale = ContentScale.Crop,
-//                            alignment = Alignment.TopCenter,
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .animateContentSize(),
-//                            colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.4f), BlendMode.Darken)
-//                        )
-//                    }
-//                }
-//                Column {
-//                    Text(
-//                        text = news.title,
-//                        color = Color.White,
-//                        fontSize = 20.sp,
-//                        fontWeight = FontWeight.Bold,
-//                        modifier = Modifier.padding(start = 5.dp, end = 5.dp, bottom = 5.dp)
-//                    )
-//
-//                    if(painter.state is AsyncImagePainter.State.Success && painter.intrinsicSize.height.dp > 250.dp){
-//                        IconButton(onClick = {
-//                            expandedImage = !expandedImage
-//                        },
-//                            modifier = Modifier.align(Alignment.CenterHorizontally)
-//                        ) {
-//                            if(expandedImage)
-//                                Icon(imageVector = Icons.Outlined.KeyboardArrowUp, "")
-//                            else
-//                                Icon(imageVector = Icons.Outlined.KeyboardArrowDown, "")
-//                        }
-//                    }
-//                }
-//            }
-//            Column(modifier = Modifier.padding(10.dp)) {
-//                Text(text = news.description)
-//
-//                Divider(modifier = Modifier.padding(5.dp))
-//
-//                Text(text = news.publishedAt)
-//            }
-//        }
-//    }
-//}
 
 @Composable
 fun WebViewNews(
@@ -317,9 +209,8 @@ fun WebViewNews(
         mutableStateOf(Bundle())
     }
 
-
-    AndroidView(factory = { context ->
-        WebView(context).apply {
+    AndroidView(factory = { contextView ->
+        WebView(contextView).apply {
             webViewClient = object : WebViewClient(){
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
@@ -383,7 +274,6 @@ fun NewsItem(
     news : News,
     onClick : (News) -> Unit
 ){
-
     var isError : Boolean by rememberSaveable {
         mutableStateOf(false)
     }

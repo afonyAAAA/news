@@ -19,6 +19,7 @@ import ru.fi.news.utils.isInternetAvailable
 class NewsViewModel(newsRepository : NewsRepository) : ViewModel() {
 
     var stateUi by mutableStateOf(StateUi())
+
     init {
         viewModelScope.launch {
             val news = newsRepository
@@ -72,7 +73,6 @@ class NewsViewModel(newsRepository : NewsRepository) : ViewModel() {
                     stateUi
                 }
             }
-
             is UIevent.CheckLoadState -> {
                 val isError = event.news.loadState.append is LoadState.Error
                         && ((event.news.loadState.append as? LoadState.Error)?.error as? HttpException)?.code() != 426

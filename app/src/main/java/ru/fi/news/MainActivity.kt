@@ -53,7 +53,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent{
             NewsTheme{
-
                 var hideSplashScreen by rememberSaveable { mutableStateOf(false) }
 
                 Scaffold(
