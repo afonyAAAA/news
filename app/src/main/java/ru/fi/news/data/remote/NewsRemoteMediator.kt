@@ -1,22 +1,16 @@
 package ru.fi.news.data.remote
 
-import android.util.Log
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
-import androidx.room.paging.util.getClippedRefreshKey
 import androidx.room.withTransaction
-import androidx.sqlite.db.SimpleSQLiteQuery
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
 import ru.fi.news.data.local.NewsDatabase
 import ru.fi.news.data.local.NewsEntity
 import ru.fi.news.data.toNewsEntity
 import java.io.IOException
-import kotlin.math.ceil
-
-
 
 @OptIn(ExperimentalPagingApi::class)
 class NewsRemoteMediator(

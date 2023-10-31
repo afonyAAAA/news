@@ -11,7 +11,7 @@ interface NewsApi {
     ) : NewsDto
 
     companion object {
-        const val API_KEY = "26eddb253e7840f988aec61f2ece2907"
+        const val API_KEY = "310f1b56ed3e4f60b68464c2b8b5275a"
         const val BASE_URL = "https://newsapi.org/v2/"
     }
 }
