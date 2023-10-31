@@ -8,7 +8,7 @@ import java.text.SimpleDateFormat
 fun String.convertToMyDateFormat() : String{
     val inputDateString = this
     val inputFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
-    val outputFormat = "dd/MM/yyyy HH:mm:ss"
+    val outputFormat = "dd/MM/yyyy"
 
     val inputFormatter = SimpleDateFormat(inputFormat)
     val outputFormatter = SimpleDateFormat(outputFormat)
@@ -20,7 +20,7 @@ fun String.convertToMyDateFormat() : String{
 fun Article.toNewsEntity() : NewsEntity {
     return NewsEntity(
         author = author,
-        title = title ?: "",
+        title = title,
         description = description,
         content = content,
         source = source.name,

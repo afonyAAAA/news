@@ -7,12 +7,11 @@ import retrofit2.http.Query
 interface NewsApi {
     @GET("everything?q=ios&from=2019-04-00&sortBy=publishedAt&apiKey=$API_KEY")
     suspend fun getNews(
-        @Query("page") page : Int,
-        @Query("pageSize") pageSize : Int
+        @Query("page") page : Int
     ) : NewsDto
 
     companion object {
-        const val API_KEY = "310f1b56ed3e4f60b68464c2b8b5275a"
+        const val API_KEY = "26eddb253e7840f988aec61f2ece2907"
         const val BASE_URL = "https://newsapi.org/v2/"
     }
 }

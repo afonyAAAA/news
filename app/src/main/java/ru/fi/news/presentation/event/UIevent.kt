@@ -10,6 +10,7 @@ sealed class UIevent(){
     data class CheckInternet(val context : Context) : UIevent()
     object CanRefresh : UIevent()
     object HideWebView : UIevent()
-    object  NotCanRefresh: UIevent()
-
+    object  CanNotRefresh: UIevent()
+    data class CheckLoadState(val news: LazyPagingItems<News>) : UIevent()
+    data class CheckEndListNews(val news: LazyPagingItems<News>) : UIevent()
 }

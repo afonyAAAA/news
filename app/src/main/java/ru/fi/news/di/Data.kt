@@ -6,6 +6,7 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.room.Room
+import okhttp3.OkHttpClient
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -18,6 +19,7 @@ import ru.fi.news.data.local.NewsEntity
 import ru.fi.news.data.remote.NewsImpl
 import ru.fi.news.data.remote.NewsRepository
 import ru.fi.news.viewModel.NewsViewModel
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalPagingApi::class)
 val dataModule = module {
@@ -31,8 +33,14 @@ val dataModule = module {
     }
 
     single<NewsApi> {
+        val httpClient = OkHttpClient.Builder()
+            .readTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .build()
+
         Retrofit.Builder()
             .baseUrl(NewsApi.BASE_URL)
+            .client(httpClient)
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
             .create()
@@ -45,9 +53,9 @@ val dataModule = module {
 
         Pager(
             config = PagingConfig(
-                pageSize = 20,
+                pageSize = 100,
                 prefetchDistance = 5,
-                initialLoadSize = 19
+                initialLoadSize = 100
             ),
             remoteMediator = NewsRemoteMediator(
                 newsDb = newsDb,

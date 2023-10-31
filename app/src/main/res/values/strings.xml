@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">News</string>
+    <string name="InternetConnectionIsNotExist">Интернет соединение потеряно</string>
+    <string name="noMoreNews">Новости закончились :(</string>
+    <string name="messageInternetNotConnection">Похоже что интернет пропал</string>
+    <string name="Refresh">Перезагрузить</string>
 </resources>
