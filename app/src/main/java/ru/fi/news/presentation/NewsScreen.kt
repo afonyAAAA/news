@@ -71,7 +71,6 @@ import ru.fi.news.R
 import ru.fi.news.domain.News
 import ru.fi.news.presentation.event.UIevent
 import ru.fi.news.presentation.stateUI.StateUi
-import ru.fi.news.viewModel.NewsViewModel
 
 @Composable
 fun NewsScreen(newsViewModel : NewsViewModel = koinViewModel()){

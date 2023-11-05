@@ -1,4 +1,4 @@
-package ru.fi.news.viewModel
+package ru.fi.news.presentation
 
 import android.widget.Toast
 import androidx.compose.runtime.getValue

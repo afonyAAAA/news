@@ -1,7 +1,5 @@
 package ru.fi.news.di
 
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -18,7 +16,7 @@ import ru.fi.news.data.local.NewsDatabase
 import ru.fi.news.data.local.NewsEntity
 import ru.fi.news.data.remote.NewsImpl
 import ru.fi.news.data.remote.NewsRepository
-import ru.fi.news.viewModel.NewsViewModel
+import ru.fi.news.presentation.NewsViewModel
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalPagingApi::class)
